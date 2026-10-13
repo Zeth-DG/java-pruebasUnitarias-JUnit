@@ -33,63 +33,58 @@ A continuación se detallan los casos de prueba ejecutados en la suite de JUnit:
 | ----- | ----- | ----- | ----- | ----- | 
 | `calculateSubtotal` | `price = 1500, quantity = 1` | `1500.0` | `1500.0` | Verificar multiplicación con valores positivos estándar. | 
 | `calculateSubtotal` | `price = 100, quantity = 3` | `300.0` | `300.0` | Verificar multiplicación para compras regulares sin descuento. | 
+| `calculateSubtotal` | `price = 999.99, quantity = 1` | `999.99` | `999.99` | **Caso borde:** Verificar cálculo en la frontera previa al umbral de descuento. | 
 | `calculateSubtotal` | `price = 0, quantity = 3` | `0.0` | `0.0` | Validar comportamiento cuando el precio es cero. | 
 | `calculateSubtotal` | `price = 100, quantity = 0` | `0.0` | `0.0` | Validar comportamiento cuando la cantidad es cero. | 
 | `calculateSubtotal` | `price = -100, quantity = 5` | `0.0` | `0.0` | Verificar manejo de seguridad ante precios negativos. | 
-| `isaValidPurchase` | `price = 1500, quantity = 1` | `true` | `true` | Comprobar aceptación de compra válida estándar. | 
+| `isaValidPurchase` | `price = 0.01, quantity = 2` | `true` | `true` | **Caso borde:** Validar aceptación con el precio mínimo mayor a cero. | 
+| `isaValidPurchase` | `price = 1500, quantity = 1` | `true` | `true` | Comprobar aceptación de compra válida estándar con cantidad mínima (`1`). | 
 | `isaValidPurchase` | `price = 100, quantity = 3` | `true` | `true` | Comprobar aceptación de compra estándar sin descuento. | 
 | `isaValidPurchase` | `price = 0, quantity = 5` | `false` | `false` | Rechazar compra con precio igual a cero. | 
 | `isaValidPurchase` | `price = 100, quantity = 0` | `false` | `false` | Rechazar compra con cantidad cero. | 
 | `isaValidPurchase` | `price = -100, quantity = 5` | `false` | `false` | Rechazar compra con precio negativo. | 
 | `calculateDiscount` | `subTotal = 600` | `0.0` | `0.0` | Verificar que subtotales menores a 1000 no generan descuento. | 
-| `calculateDiscount` | `subTotal = 1000` | `100.0` | `100.0` | Verificar aplicación exacta del descuento en el límite inferior ($1000$). | 
+| `calculateDiscount` | `subTotal = 999.99` | `0.0` | `0.0` | **Caso borde:** Confirmar que $999.99$ no recibe descuento (límite estricto). | 
+| `calculateDiscount` | `subTotal = 1000` | `100.0` | `100.0` | **Caso borde:** Verificar aplicación exacta en el umbral exacto ($1000$). | 
+| `calculateDiscount` | `subTotal = 1000.01` | `100.001` | `100.001` | **Caso borde:** Verificar aplicación inmediata del descuento tras superar el umbral. | 
 | `calculateDiscount` | `subTotal = 5000` | `500.0` | `500.0` | Verificar cálculo correcto del descuento para subtotales altos. | 
 | `calculateFinalPrice` | `subTotal = 300` | `300.0` | `300.0` | Comprobar que el precio final coincide con el subtotal si no hay descuento. | 
 | `calculateFinalPrice` | `subTotal = 1000` | `900.0` | `900.0` | Comprobar resta correcta del descuento en el límite ($1000 - 100$). | 
 | `calculateFinalPrice` | `subTotal = 5000` | `4500.0` | `4500.0` | Comprobar resta correcta del descuento en montos mayores ($5000 - 500$). | 
 
-## 4. Alcance y futuros casos límite (Scope)
+## 4. Alcance y futuros casos límite 
 
-Para garantizar la máxima solidez en un entorno de producción real, se identifican los siguientes **casos límite y escenarios extendidos** recomendados para futuras iteraciones del proyecto:
+Se han incorporado exitosamente las pruebas de valores frontera (como `999.99`, `1000.01` y `0.01`). Para garantizar aún más la máxima solidez en un entorno de producción real, se identifican las siguientes oportunidades de mejora:
 
-1. **Fronteras con decimales exactos (Boundary testing):**
+1. **Manejo de cantidades negativas en el subtotal:**
+   * **Inconsistencia de insumos (`price = 100`, `quantity = -5`):** La validación actual en `calculateSubtotal` solo verifica si `price < 0`. Sería recomendable agregar una comprobación para `quantity < 0` para prevenir subtotales negativos si se llama al método directamente.
 
-   * **Subtotal justo debajo del umbral (`subTotal = 999.99`):** Comprobar que no se aplique descuento erróneamente por un redondeo involuntario.
+2. **Desbordamiento de memoria (Numeric Overflow):**
+   * **Valores numéricos extremos (`price = Double.MAX_VALUE`, `quantity = Integer.MAX_VALUE`):** Evaluar el comportamiento ante valores masivos para prevenir resultados del tipo `Infinity` o `NaN`.
 
-   * **Subtotal inmediatamente superior al umbral (`subTotal = 1000.01`):** Verificar la aplicación del descuento en el valor flotante contiguo al límite.
+3. **Pruebas de aserción con tolerancia (`Delta` Assertions):**
+   * En cálculos flotantes que involucren centavos (como el retorno de `100.001`), se sugiere adoptar de manera explícita la firma con delta: `assertEquals(expected, actual, 0.0001)` para prevenir imprecisiones de representación IEEE 754.
 
-2. **Cantidades y precios mínimos permitidos:**
+## 5. Resultados de ejecución
 
-   * **Unidad monetaria mínima (`price = 0.01`, `quantity = 1`):** Confirmar que el sistema procesa transacciones con los montos mínimos válidos en centavos.
+Las pruebas actualizadas se ejecutaron utilizando **JUnit 6** en **IntelliJ IDEA**, obteniendo los siguientes resultados reales:
 
-3. **Desbordamiento de Memoria (Numeric Overflow):**
+* **Pruebas totales ejecutadas:** 18
 
-   * **Valores numéricos extremos (`price = Double.MAX_VALUE`, `quantity = Integer.MAX_VALUE`):** Probar el comportamiento del sistema ante valores masivos para prevenir desbordamientos o resultados del tipo `Infinity` / `NaN`.
+* **Pruebas exitosas (Passed):** 18
 
-4. **Pruebas de aserción con tolerancia (`Delta` Assertions):**
+* **Pruebas fallidas (Failed):** 0
 
-   * **Redondeo monetario:** Implementar `assertEquals(expected, actual, 0.001)` en las aserciones de JUnit para manejar imprecisiones inherentes al punto flotante de `double`.
+* **Estado del proceso:** Finalizado con éxito (`exit code 0`).
 
-## 5. Resultados de Ejecución
-
-Las pruebas se ejecutaron utilizando **JUnit 6** en **IntelliJ IDEA**, obteniendo los siguientes resultados reales:
-
-* **Pruebas Totales Ejecutadas:** 14
-
-* **Pruebas Exitosas (Passed):** 14
-
-* **Pruebas Fallidas (Failed):** 0
-
-* **Estado del Proceso:** Finalizado con éxito (`exit code 0`).
-
-## 6. Errores que se pueden prevenir
+## 6. Errores que se pueden prevenir con la realización de pruebas unitarias
 
 El diseño de pruebas unitarias permite detectar de manera anticipada fallos comunes de programación como:
 
-1. **Errores en límites de condiciones (`Off-by-one` / fronteras):** Si por error la regla de descuento se hubiera escrito como `subTotal > 1000` (excluyendo el 1000), la prueba unitaria con subtotal de $1000$ habría fallado al retornar $0$ de descuento en lugar de $100$.
+1. **Errores de Frontera / "Off-by-one":** Al probar valores como `999.99` y `1000.00`, garantizamos que la condición de negocio sea exactamente `subTotal >= 1000` y no `subTotal > 1000`, evitando aplicar descuentos indebidos o negarlos cuando el cliente alcanza el monto exacto.
 
-2. **Falta de manejo de valores inválidos (Robustez):** Si el método de subtotal no contemplara el filtro para precios negativos (`price < 0`), una multiplicación de un precio negativo por una cantidad positiva arrojaría un subtotal negativo, corrompiendo todo el flujo financiero de la compra. Las pruebas aseguran que se devuelva `0` en estos casos anómalos.
+2. **Falta de manejo de valores inválidos (Robustez):** Si el método de subtotal no contemplara la validación para precios negativos (`price < 0`), una multiplicación arrojaría un subtotal negativo, corrompiendo el cálculo en la caja. Las pruebas garantizan que la aplicación sea resiliente ante datos de entrada anómalos.
 
 ## 7. Conclusión
 
-Las pruebas unitarias son un pilar fundamental en el desarrollo de software para comercio electrónico. Permiten aislar y verificar de forma metódica cada componente de la lógica de negocio (subtotales, validaciones, descuentos y totales). Contribuyen directamente a la confiabilidad de la aplicación al garantizar que cualquier cambio futuro en el código no rompa las reglas financieras esenciales, protegiendo tanto los ingresos del negocio como la experiencia de compra del usuario final.
+Las pruebas unitarias son un pilar fundamental en el desarrollo de software para comercio electrónico. La inclusión de pruebas en los límites de decisión (valores borde) fortalece el sistema frente a comportamientos inesperados en las transacciones reales. Permiten aislar y verificar metódicamente cada componente de la lógica de negocio, asegurando que los cambios futuros no rompan las reglas financieras del sistema.
