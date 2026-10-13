@@ -10,6 +10,7 @@ public class PurchaseCalculatorTest {
     void calculateSubtotal(){
         assertEquals(1500, purchaseCalculator.calculateSubtotal(1500, 1)); //positivos
         assertEquals(300, purchaseCalculator.calculateSubtotal(100, 3)); // sin descuento
+        assertEquals(999.99, purchaseCalculator.calculateSubtotal(999.99, 1)); // sin descuento
         assertEquals(0, purchaseCalculator.calculateSubtotal(0, 3)); //precio = 0
         assertEquals(0, purchaseCalculator.calculateSubtotal(100, 0)); //cantidad 0
         assertEquals(0, purchaseCalculator.calculateSubtotal(-100, 5)); //precio negativo
@@ -18,7 +19,8 @@ public class PurchaseCalculatorTest {
     @Test
     @DisplayName("Test to: is a valid purchase?")
     void isaValidPurchase(){
-        assertTrue(purchaseCalculator.isaValidPurchase(1500, 1)); //positivos
+        assertTrue(purchaseCalculator.isaValidPurchase(0.01, 2)); //precio mínimo
+        assertTrue(purchaseCalculator.isaValidPurchase(1500, 1)); //positivos, cantidad mínima
         assertTrue(purchaseCalculator.isaValidPurchase(100, 3)); //positivos
         assertFalse(purchaseCalculator.isaValidPurchase(0, 5)); //precio igual a 0
         assertFalse(purchaseCalculator.isaValidPurchase(100, 0)); //cantidad igual a 0
@@ -28,8 +30,10 @@ public class PurchaseCalculatorTest {
     @Test
     @DisplayName("Test to: calculate discount")
     void calculateDiscount(){
-        assertEquals(0,purchaseCalculator.calculateDiscount(600)); //menor a 1000
+        assertEquals(0,purchaseCalculator.calculateDiscount(600)); //menor a 100
+        assertEquals(0, purchaseCalculator.calculateDiscount(999.99));
         assertEquals(100,purchaseCalculator.calculateDiscount(1000)); //justo 1000
+        assertEquals(100.001, purchaseCalculator.calculateDiscount(1000.01));
         assertEquals(500,purchaseCalculator.calculateDiscount(5000)); //mayor a 1000
     }//calculate discount
 
