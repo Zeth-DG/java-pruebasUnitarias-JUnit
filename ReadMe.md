@@ -56,13 +56,10 @@ A continuación se detallan los casos de prueba ejecutados en la suite de JUnit:
 
 Se han incorporado exitosamente las pruebas de valores frontera (como `999.99`, `1000.01` y `0.01`). Para garantizar aún más la máxima solidez en un entorno de producción real, se identifican las siguientes oportunidades de mejora:
 
-1. **Manejo de cantidades negativas en el subtotal:**
-   * **Inconsistencia de insumos (`price = 100`, `quantity = -5`):** La validación actual en `calculateSubtotal` solo verifica si `price < 0`. Sería recomendable agregar una comprobación para `quantity < 0` para prevenir subtotales negativos si se llama al método directamente.
-
-2. **Desbordamiento de memoria (Numeric Overflow):**
+1. **Desbordamiento de memoria (Numeric Overflow):**
    * **Valores numéricos extremos (`price = Double.MAX_VALUE`, `quantity = Integer.MAX_VALUE`):** Evaluar el comportamiento ante valores masivos para prevenir resultados del tipo `Infinity` o `NaN`.
 
-3. **Pruebas de aserción con tolerancia (`Delta` Assertions):**
+2. **Pruebas de aserción con tolerancia (`Delta` Assertions):**
    * En cálculos flotantes que involucren centavos (como el retorno de `100.001`), se sugiere adoptar de manera explícita la firma con delta: `assertEquals(expected, actual, 0.0001)` para prevenir imprecisiones de representación IEEE 754.
 
 ## 5. Resultados de ejecución
